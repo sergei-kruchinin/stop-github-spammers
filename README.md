@@ -53,5 +53,7 @@ On GitHub, there is an issue where users follow you, you reciprocate, and then t
 ## Report Text
 
 ```plaintext
-The user is inflating his rating. He follows others, and when he gets a follow back, he unfollows. As a result, he appears to be an influential developer, but this is deceptive.
+The user is inflating his rating.
+He follows others, and when he gets a follow back, he unfollows.
+As a result, he appears to be an influential developer, but this is deceptive.
 ```
