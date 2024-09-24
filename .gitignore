@@ -1,0 +1,8 @@
+config.py
+__pycache__
+.py[cod]
+.env
+.venv
+.kate-swp
+.swp
+
