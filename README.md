@@ -23,7 +23,7 @@ On GitHub, there is an issue where users follow you, you reciprocate, and then t
     cd stop-gh-spamers
     ```
 
-4. Create a `.env` file and add your GitHub token to it:
+4. Create a `config.py` file and add your GitHub token and username to it:
     ```env
     GITHUB_TOKEN = 'your_github_api_acces_token'
     USERNAME = 'your_github_user-name'
@@ -47,9 +47,11 @@ On GitHub, there is an issue where users follow you, you reciprocate, and then t
    - File a report:
      1. Go to the user's profile and select "Block or report user".
      2. Choose "Report".
-     3. Select the reason "Spam or inauthentic Activity".
+     3. Select the reason "Spam or inauthentic Activity" (Inauthentic use of the service such as rank abuse, star abuse, the use of bots, fake accounts or other deceptive uses of the service.
+)
 
 ## Report Text
 
 ```plaintext
-Inauthentic use of the service such as rank abuse, star abuse, the use of bots, fake accounts or other deceptive uses of the service.
+The user is inflating his rating. He follows others, and when he gets a follow back, he unfollows. As a result, he appears to be an influential developer, but this is deceptive.
+```
