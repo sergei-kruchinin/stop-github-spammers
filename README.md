@@ -33,7 +33,7 @@ On GitHub, there is an issue where users follow you, you reciprocate, and then t
 
 1. Run the `gh-follow.py` script:
     ```sh
-    python gh-follow.py
+    python3 gh-follow.py
     ```
 
 2. The program will display:
