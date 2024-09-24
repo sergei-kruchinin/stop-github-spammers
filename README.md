@@ -25,7 +25,8 @@ On GitHub, there is an issue where users follow you, you reciprocate, and then t
 
 4. Create a `.env` file and add your GitHub token to it:
     ```env
-    GH_API_KEY=your_github_api_key
+    GITHUB_TOKEN = 'your_github_api_acces_token'
+    USERNAME = 'your_github_user-name'
     ```
 
 ## Usage

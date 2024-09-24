@@ -5,4 +5,5 @@ __pycache__
 .venv
 .kate-swp
 .swp
+.save
 
