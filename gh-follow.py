@@ -3,27 +3,20 @@ from config import GITHUB_TOKEN, USERNAME
 
 FOLLOWER_FOLLOWING_RATIO_THRESHOLD = 10
 
-def get_github_users(url):
+def get_user_info(username):
     headers = {
         'Authorization': f'token {GITHUB_TOKEN}',
     }
-    users = []
-    while url:
-        response = requests.get(url, headers=headers)
-        response.raise_for_status()
-        users.extend(response.json())
-        url = response.links.get('next', {}).get('url')
-    return [user['login'] for user in users]
+    url = f'https://api.github.com/users/{username}'
+    response = requests.get(url, headers=headers)
+    response.raise_for_status()
+    return response.json()
 
 def check_spammer(username):
-    followers_url = f'https://api.github.com/users/{username}/followers'
-    following_url = f'https://api.github.com/users/{username}/following'
-
-    followers = get_github_users(followers_url)
-    following = get_github_users(following_url)
-
-    followers_count = len(followers)
-    following_count = len(following)
+    user_info = get_user_info(username)
+    
+    followers_count = user_info['followers']
+    following_count = user_info['following']
 
     print(f'User: {username}')
     print(f'Number of followers: {followers_count}')
@@ -39,6 +32,18 @@ def check_spammer(username):
         else:
             print(f'{username} probably is not a spammer based on the ratio\n')
     print()
+
+def get_github_users(url):
+    headers = {
+        'Authorization': f'token {GITHUB_TOKEN}',
+    }
+    users = []
+    while url:
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+        users.extend(response.json())
+        url = response.links.get('next', {}).get('url')
+    return [user['login'] for user in users]
 
 def main():
     followers_url = f'https://api.github.com/users/{USERNAME}/followers'
