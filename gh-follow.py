@@ -23,26 +23,22 @@ def get_nonmutual_followers(username: str) -> None:
     non_mutual_followers = followers - following
     non_mutual_followers_count = len(non_mutual_followers)
 
-    not_following = following - followers
-    not_following_count = len(not_following)
-
     mutual_followers = followers & following
     mutual_followers_count = len(mutual_followers)
 
     print(f'  {username} non mutual followers count: {non_mutual_followers_count}')
-    print(f'  {username} not following back count: {not_following_count}')
     print(f'  {username} mutual followers count: {mutual_followers_count}')
 
     # Calculate ratio and determine if user might be a spammer
     try:
-        ratio = (non_mutual_followers_count + not_following_count) / mutual_followers_count
+        ratio = non_mutual_followers_count / mutual_followers_count
         print(f'  Ratio of non-mutual to mutual followers: {ratio:.2f}')
         if ratio > NONMUTUAL_SPAMMER_RATIO_THRESHOLD:
             print(f'  {username} might be a spammer based on non-mutual followers ratio.\n')
         else:
             print(f'  {username} probably is not a spammer based on non-mutual followers ratio.\n')
     except ZeroDivisionError:
-        print(f'  {username} might be a spammer: no mutual followers found.\n')
+        print(f'  {username} might be a spammer: no mutual followers.\n')
 
 def check_spammer(username: str) -> None:
     try:
@@ -65,7 +61,7 @@ def check_spammer(username: str) -> None:
             else:
                 print(f'  {username} probably is not a spammer based on the ratio\n')
 
-        if followers_count < 300 and following_count < 300:
+        if followers_count < 400 and following_count < 800:
             get_nonmutual_followers(username)
 
         print()
