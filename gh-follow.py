@@ -3,116 +3,146 @@ from config import GITHUB_TOKEN, USERNAME
 
 FOLLOWER_FOLLOWING_RATIO_THRESHOLD = 10
 NONMUTUAL_SPAMMER_RATIO_THRESHOLD = 0.5
+MAX_FOLLOWERS_TO_GET_THEM = 400
+MAX_FOLLOWING_TO_GET_THEM = 800
 
-def get_user_info(username: str) -> dict:
-    headers = {
-        'Authorization': f'token {GITHUB_TOKEN}',
-    }
-    url = f'https://api.github.com/users/{username}'
-    response = requests.get(url, headers=headers)
-    response.raise_for_status()
-    return response.json()
 
-def get_nonmutual_followers(username: str) -> None:
-    followers_url = f'https://api.github.com/users/{username}/followers'
-    following_url = f'https://api.github.com/users/{username}/following'
+class GitHubUser:
+    username: str
+    followers_count: int
+    following_count: int
+    followers: set
+    following: set
+    non_mutual_followers: set
+    non_mutual_followers_count = int
+    mutual_followers = set
+    mutual_followers_count = int
+    non_followers = set
+    non_followers_count = int
 
-    followers = set(get_github_users(followers_url))
-    following = set(get_github_users(following_url))
+    def __init__(self, username: str):
+        self.username = username
+        headers = {
+            'Authorization': f'token {GITHUB_TOKEN}',
+        }
+        url = f'https://api.github.com/users/{username}'
+        try:
+            response = requests.get(url, headers=headers)
+            response.raise_for_status()
+            user_info = response.json()
+            self.followers_count = user_info['followers']
+            self.following_count = user_info['following']
+        except requests.HTTPError as e:
+            print(f"Failed to get info for {username}: {e}")
 
-    non_mutual_followers = followers - following
-    non_mutual_followers_count = len(non_mutual_followers)
+    @staticmethod
+    def get_github_users(url: str) -> set:
+        headers = {
+            'Authorization': f'token {GITHUB_TOKEN}',
+        }
+        users = []
+        try:
+            while url:
+                response = requests.get(url, headers=headers)
+                response.raise_for_status()
+                users.extend(response.json())
+                if 'next' not in response.links:
+                    break
+                url = response.links['next']['url']
+            return set([user['login'] for user in users])
+        except requests.HTTPError as e:
+            print(f"Failed to get info by {url}: {e}")
 
-    mutual_followers = followers & following
-    mutual_followers_count = len(mutual_followers)
+    def get_followers_following(self) -> None:
+        followers_url = f'https://api.github.com/users/{self.username}/followers'
+        following_url = f'https://api.github.com/users/{self.username}/following'
+        self.followers = set(GitHubUser.get_github_users(followers_url))
+        self.following = set(GitHubUser.get_github_users(following_url))
 
-    print(f'  {username} non mutual followers count: {non_mutual_followers_count}')
-    print(f'  {username} mutual followers count: {mutual_followers_count}')
+    def check_nonmutual_followers(self) -> None:
+        self.non_mutual_followers = self.followers - self.following
+        self.non_mutual_followers_count = len(self.non_mutual_followers)
+        self.mutual_followers = self.followers & self.following
+        self.mutual_followers_count = len(self.mutual_followers)
+        self.non_followers = self.following - self.followers
+        self.non_followers_count = len(self.non_followers)
 
-    # Calculate ratio and determine if user might be a spammer
-    try:
-        ratio = non_mutual_followers_count / mutual_followers_count
+    def print_non_mutual_count(self):
+        print(f'  {self.username} non mutual followers count: {self.non_mutual_followers_count}')
+        print(f'  {self.username} mutual followers count: {self.mutual_followers_count}')
+
+    def print_follows(self):
+        print(f'  {self.username} number of followers: {self.followers_count}')
+        print(f'  {self.username} number of following: {self.following_count}')
+
+    def print_non_mutual_users(self):
+        print(f'Users who have followed {self.username} but {self.username} have not followed back:')
+        for user in self.non_mutual_followers:
+            print(user)
+
+        print(f'Users {self.username} is  following but who haven\'t followed you back:')
+        for user in self.non_followers:
+            print(user)
+
+    def check_spammer_slow(self):
+        # Calculate ratio and determine if user might be a spammer
+        if self.mutual_followers_count == 0:
+            print(f'  {self.username} might be a spammer: no mutual followers.\n')
+            return
+
+        ratio = self.non_mutual_followers_count / self.mutual_followers_count
         print(f'  Ratio of non-mutual to mutual followers: {ratio:.2f}')
         if ratio > NONMUTUAL_SPAMMER_RATIO_THRESHOLD:
-            print(f'  {username} might be a spammer based on non-mutual followers ratio.\n')
+            print(f'  {self.username} might be a spammer based on non-mutual followers ratio.\n')
         else:
-            print(f'  {username} probably is not a spammer based on non-mutual followers ratio.\n')
-    except ZeroDivisionError:
-        print(f'  {username} might be a spammer: no mutual followers.\n')
+            print(f'  {self.username} probably is not a spammer based on non-mutual followers ratio.\n')
 
-def check_spammer(username: str) -> None:
-    try:
-        user_info = get_user_info(username)
+    def try_to_check_spammer_slow(self):
+        if (self.followers_count < MAX_FOLLOWERS_TO_GET_THEM
+                and self.following_count < MAX_FOLLOWING_TO_GET_THEM):
+            self.get_followers_following()
+            self.check_nonmutual_followers()
+            self.print_follows()
+            self.check_spammer_slow()
 
-        followers_count = user_info['followers']
-        following_count = user_info['following']
+    @staticmethod
+    def check_is_the_user_is_spammer(username: str):
+        user = GitHubUser(username)
+        user.get_followers_following()
+        user.check_spammer_fast()
+        user.try_to_check_spammer_slow()
 
-        print(f'  User: {username}')
-        print(f'  Number of followers: {followers_count}')
-        print(f'  Number of following: {following_count}')
+    def check_spammer_fast(self) -> None:
+        if self.following_count == 0:
+            print(f'  {self.username} might be a spammer: zero following')
+            return
 
-        if following_count == 0:
-            print(f'  {username} might be a spammer: zero following')
+        ratio = self.followers_count / self.following_count
+        print(f'  Follower to following ratio: {ratio:.2f}')
+        if ratio > FOLLOWER_FOLLOWING_RATIO_THRESHOLD:
+            print(f'  {self.username} might be a spammer based on the ratio.\n')
         else:
-            ratio = followers_count / following_count
-            print(f'  Follower to following ratio: {ratio:.2f}')
-            if ratio > FOLLOWER_FOLLOWING_RATIO_THRESHOLD:
-                print(f'  {username} might be a spammer based on the ratio.\n')
-            else:
-                print(f'  {username} probably is not a spammer based on the ratio\n')
+            print(f'  {self.username} probably is not a spammer based on the ratio\n')
 
-        if followers_count < 400 and following_count < 800:
-            get_nonmutual_followers(username)
+    def check_followers_spammers(self):
+        print('Checking for spammers among users who have followed you but you have not followed back:')
+        for follower in self.non_mutual_followers:
+            GitHubUser.check_is_the_user_is_spammer(follower)
 
-        print()
-    except requests.HTTPError as e:
-        print(f"Failed to get info for {username}: {e}")
+        print('Checking for spammers among users you are following but who haven\'t followed you back:')
+        for following in self.non_followers:
+            GitHubUser.check_is_the_user_is_spammer(following)
 
-def get_github_users(url: str) -> list:
-    headers = {
-        'Authorization': f'token {GITHUB_TOKEN}',
-    }
-    users = []
-    while url:
-        response = requests.get(url, headers=headers)
-        response.raise_for_status()
-        users.extend(response.json())
-        if 'next' not in response.links:
-            break
-        url = response.links['next']['url']
-    return [user['login'] for user in users]
 
 def main() -> None:
-    followers_url = f'https://api.github.com/users/{USERNAME}/followers'
-    following_url = f'https://api.github.com/users/{USERNAME}/following'
+    me = GitHubUser(USERNAME)
+    me.get_followers_following()
+    me.check_nonmutual_followers()
+    me.print_follows()
+    me.print_non_mutual_count()
+    me.print_non_mutual_users()
+    me.check_followers_spammers()
 
-    followers = set(get_github_users(followers_url))
-    following = set(get_github_users(following_url))
-
-    followers_count = len(followers)
-    print('Followers count:', followers_count)
-
-    following_count = len(following)
-    print('Following count:', following_count)
-
-    not_mutual_followers = followers - following
-    non_followers = following - followers
-
-    print('Users who have followed you but you have not followed back:')
-    for user in not_mutual_followers:
-        print(user)
-
-    print('Users you are following but who haven\'t followed you back:')
-    for user in non_followers:
-        print(user)
-
-    print('Checking for spammers among users who have followed you but you have not followed back:')
-    for user in not_mutual_followers:
-        check_spammer(user)
-
-    print('Checking for spammers among users you are following but who haven\'t followed you back:')
-    for user in non_followers:
-        check_spammer(user)
 
 if __name__ == '__main__':
     main()
