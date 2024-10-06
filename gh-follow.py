@@ -14,11 +14,11 @@ class GitHubUser:
     followers: set
     following: set
     non_mutual_followers: set
-    non_mutual_followers_count = int
-    mutual_followers = set
-    mutual_followers_count = int
-    non_followers = set
-    non_followers_count = int
+    non_mutual_followers_count: int
+    mutual_followers: set
+    mutual_followers_count: int
+    non_followers: set
+    non_followers_count: int
 
     def __init__(self, username: str):
         self.username = username
@@ -67,15 +67,15 @@ class GitHubUser:
         self.non_followers = self.following - self.followers
         self.non_followers_count = len(self.non_followers)
 
-    def print_non_mutual_count(self):
+    def print_non_mutual_count(self) -> None:
         print(f'  {self.username} non mutual followers count: {self.non_mutual_followers_count}')
         print(f'  {self.username} mutual followers count: {self.mutual_followers_count}')
 
-    def print_follows(self):
+    def print_follows(self) -> None:
         print(f'  {self.username} number of followers: {self.followers_count}')
         print(f'  {self.username} number of following: {self.following_count}')
 
-    def print_non_mutual_users(self):
+    def print_non_mutual_users(self) -> None:
         print(f'Users who have followed {self.username} but {self.username} have not followed back:')
         for user in self.non_mutual_followers:
             print(user)
@@ -84,7 +84,7 @@ class GitHubUser:
         for user in self.non_followers:
             print(user)
 
-    def check_spammer_slow(self):
+    def check_spammer_slow(self) -> None:
         # Calculate ratio and determine if user might be a spammer
         if self.mutual_followers_count == 0:
             print(f'  {self.username} might be a spammer: no mutual followers.\n')
@@ -97,7 +97,7 @@ class GitHubUser:
         else:
             print(f'  {self.username} probably is not a spammer based on non-mutual followers ratio.\n')
 
-    def try_to_check_spammer_slow(self):
+    def try_to_check_spammer_slow(self) -> None:
         if (self.followers_count < MAX_FOLLOWERS_TO_GET_THEM
                 and self.following_count < MAX_FOLLOWING_TO_GET_THEM):
             self.get_followers_following()
@@ -106,7 +106,7 @@ class GitHubUser:
             self.check_spammer_slow()
 
     @staticmethod
-    def check_is_the_user_is_spammer(username: str):
+    def check_is_the_user_is_spammer(username: str) -> None:
         user = GitHubUser(username)
         user.get_followers_following()
         user.check_spammer_fast()
@@ -124,7 +124,7 @@ class GitHubUser:
         else:
             print(f'  {self.username} probably is not a spammer based on the ratio\n')
 
-    def check_followers_spammers(self):
+    def check_followers_spammers(self) -> None:
         print('Checking for spammers among users who have followed you but you have not followed back:')
         for follower in self.non_mutual_followers:
             GitHubUser.check_is_the_user_is_spammer(follower)
