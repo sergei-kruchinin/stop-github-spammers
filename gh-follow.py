@@ -22,6 +22,16 @@ class GitHubUser:
 
     def __init__(self, username: str):
         self.username = username
+        self.followers_count = 0
+        self.following_count = 0
+        self.followers = set()
+        self.following = set()
+        self.non_mutual_followers = set()
+        self.non_mutual_followers_count = 0
+        self.mutual_followers = set()
+        self.mutual_followers_count = 0
+        self.non_followers = set()
+        self.non_followers_count = 0
         headers = {
             'Authorization': f'token {GITHUB_TOKEN}',
         }
@@ -34,6 +44,8 @@ class GitHubUser:
             self.following_count = user_info['following']
         except requests.HTTPError as e:
             print(f"Failed to get info for {username}: {e}")
+        except Exception as e:
+            print(f"An unexpected error occurred while fetching user info: {e}")
 
     @staticmethod
     def get_github_users(url: str) -> set:
@@ -46,12 +58,14 @@ class GitHubUser:
                 response = requests.get(url, headers=headers)
                 response.raise_for_status()
                 users.extend(response.json())
-                if 'next' not in response.links:
-                    break
-                url = response.links['next']['url']
+                url = response.links.get('next', {}).get('url')
             return set([user['login'] for user in users])
         except requests.HTTPError as e:
-            print(f"Failed to get info by {url}: {e}")
+            print(f"Failed to get users from {url}: {e}")
+            return set()
+        except Exception as e:
+            print(f"An unexpected error occurred while fetching users: {e}")
+            return set()
 
     def get_followers_following(self) -> None:
         followers_url = f'https://api.github.com/users/{self.username}/followers'
@@ -76,13 +90,14 @@ class GitHubUser:
         print(f'  {self.username} number of following: {self.following_count}')
 
     def print_non_mutual_users(self) -> None:
-        print(f'Users who have followed {self.username} but {self.username} have not followed back:')
-        for user in self.non_mutual_followers:
-            print(user)
-
-        print(f'Users {self.username} is  following but who haven\'t followed you back:')
-        for user in self.non_followers:
-            print(user)
+        if self.non_mutual_followers:
+            print(f'Users who have followed {self.username} but haven\'t followed back:')
+            for user in self.non_mutual_followers:
+                print(user)
+        if self.non_followers:
+            print(f'Users {self.username} is following but who haven\'t followed back:')
+            for user in self.non_followers:
+                print(user)
 
     def check_spammer_slow(self) -> None:
         # Calculate ratio and determine if user might be a spammer
