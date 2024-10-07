@@ -3,8 +3,8 @@ from config import GITHUB_TOKEN, USERNAME
 
 FOLLOWER_FOLLOWING_RATIO_THRESHOLD = 10
 NONMUTUAL_SPAMMER_RATIO_THRESHOLD = 0.5
-MAX_FOLLOWERS_TO_GET_THEM = 400
-MAX_FOLLOWING_TO_GET_THEM = 800
+MAX_FOLLOWERS_TO_GET_THEM = 1400  # Set the 300 for faster result
+MAX_FOLLOWING_TO_GET_THEM = 1800  # Set the 600 for faster result
 
 
 class GitHubUser:
@@ -101,12 +101,12 @@ class GitHubUser:
 
     def check_spammer_slow(self) -> None:
         # Calculate ratio and determine if user might be a spammer
+
         if self.mutual_followers_count == 0:
             print(f'  {self.username} might be a spammer: no mutual followers.\n')
             return
-
         ratio = self.non_mutual_followers_count / self.mutual_followers_count
-        print(f'  Ratio of non-mutual to mutual followers: {ratio:.2f}')
+        print(f'  {self.username} ratio of non-mutual to mutual followers: {ratio:.2f}')
         if ratio > NONMUTUAL_SPAMMER_RATIO_THRESHOLD:
             print(f'  {self.username} might be a spammer based on non-mutual followers ratio.\n')
         else:
@@ -117,23 +117,23 @@ class GitHubUser:
                 and self.following_count < MAX_FOLLOWING_TO_GET_THEM):
             self.get_followers_following()
             self.check_nonmutual_followers()
-            self.print_follows()
+            self.print_non_mutual_count()
             self.check_spammer_slow()
 
     @staticmethod
     def check_is_the_user_is_spammer(username: str) -> None:
         user = GitHubUser(username)
-        user.get_followers_following()
         user.check_spammer_fast()
         user.try_to_check_spammer_slow()
 
     def check_spammer_fast(self) -> None:
+        self.print_follows()
         if self.following_count == 0:
             print(f'  {self.username} might be a spammer: zero following')
             return
 
         ratio = self.followers_count / self.following_count
-        print(f'  Follower to following ratio: {ratio:.2f}')
+        print(f'  {self.username} follower to following ratio: {ratio:.2f}')
         if ratio > FOLLOWER_FOLLOWING_RATIO_THRESHOLD:
             print(f'  {self.username} might be a spammer based on the ratio.\n')
         else:
