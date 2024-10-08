@@ -72,27 +72,35 @@ class GitHubUser:
         headers = {
             'Authorization': f'token {GITHUB_TOKEN}',
         }
-        users = []
+        users = set()
+
         try:
             # Support pagination to iterate through all available pages
             while url:
+                # Send a GET request to the current URL
                 response = requests.get(url, headers=headers)
                 response.raise_for_status()
-                users.extend(response.json())
-                url = response.links.get('next', {}).get('url')
-            return set([user['login'] for user in users])
+
+                # Fetch user logins and add to the set
+                page_users = {user['login'] for user in response.json()}
+                # print(len(page_users))
+                # print(page_users)
+                users.update(page_users)
+
+                # Get the URL for the next page of results, if available
+                url = response.links.get('next', {}).get('url', None)
 
         except requests.HTTPError as e:
             print(f"Failed to get users from {url}: {e}")
-            return set()
         except Exception as e:
             print(f"An unexpected error occurred while fetching users: {e}")
-            return set()
+
+        return users
 
     def get_followers_following(self) -> None:
         """Retrieves the user's followers and followings."""
-        followers_url = f'https://api.github.com/users/{self.username}/followers'
-        following_url = f'https://api.github.com/users/{self.username}/following'
+        followers_url = f'https://api.github.com/users/{self.username}/followers?per_page=100'
+        following_url = f'https://api.github.com/users/{self.username}/following?per_page=100'
         self.followers = set(GitHubUser.get_github_users(followers_url))
         self.following = set(GitHubUser.get_github_users(following_url))
 
