@@ -48,12 +48,9 @@ On GitHub, there is an issue where users follow you, you reciprocate, and then t
      1. Go to the user's profile and select "Block or report user".
      2. Choose "Report".
      3. Select the reason "Spam or inauthentic Activity" (Inauthentic use of the service such as rank abuse, star abuse, the use of bots, fake accounts or other deceptive uses of the service.
-)
-
-## Report Text
-
-```plaintext
-The user is inflating his rating.
-He follows others, and when he gets a follow back, he unfollows.
-As a result, he appears to be an influential developer, but this is deceptive.
-```
+     5. Fill the field with report text like this:
+        ```plaintext
+        The user is inflating his rating.
+        He follows others, and when he gets a follow back, he unfollows.
+        As a result, he appears to be an influential developer, but this is deceptive.
+        ```
